@@ -8,6 +8,7 @@ public class Main {
             KafkaEventProducer producer = new KafkaEventProducer();
             KafkaEventConsumer consumer = new KafkaEventConsumer();
 
+
             // Init kafka config
             producer.initKafkaConfig();
             // Init file config - Pass the file name as first parameter
@@ -22,6 +23,10 @@ public class Main {
             System.out.println("All events recieved");
 
             consumer.createConsumer();
+            System.out.println("Consumer 1 created");
+
+            //consumerTrend.createTrendConsumer();
+            //System.out.println("Consumer 2 created");
         }catch(Exception e){
             e.printStackTrace();
         }

@@ -17,9 +17,9 @@ public class FeatureSelection {
 
         lastEvent.values().removeIf(Objects::isNull);
 
-        System.out.println("first" + firstEvent);
+        //System.out.println("first" + firstEvent);
 
-        System.out.println("last" + lastEvent);
+        //System.out.println("last" + lastEvent);
 
         try{
             for (Object k : lastEvent.keySet())

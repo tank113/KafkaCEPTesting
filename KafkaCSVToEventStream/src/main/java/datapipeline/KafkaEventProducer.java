@@ -132,6 +132,30 @@ public class KafkaEventProducer {
 
             }
 
+    /**
+     * Send csv file data to the named topic on Kafka broker
+     *
+     * @param topic
+     * @throws IOException
+     */
+    public void sendOutputToKafka(Object outputCEP, String topic) throws IOException {
+        try{
+
+            System.out.println("output \t" +  outputCEP + "\n");
+            // Create the message to be sent
+            ObjectMapper mapper = new ObjectMapper();
+
+            JsonNode jsonNode = mapper.valueToTree(outputCEP);
+            // Send the message
+            //System.out.println(jsonNode);
+            ProducerRecord<String, JsonNode> data = new ProducerRecord<String, JsonNode>(topic,jsonNode);
+            producer.send(data);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
 
 
     /**

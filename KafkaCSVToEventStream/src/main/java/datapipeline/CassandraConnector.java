@@ -58,8 +58,7 @@ public class CassandraConnector {
     public void insertStreamToTable(EventBean[] dataStream) {
         StringBuilder sb = new StringBuilder("INSERT INTO ")
                 .append(TABLE_NAME).append("(id, title) ")
-                .append("VALUES (").append(dataStream.getId())
-                .append(", '").append(dataStream.getTitle()).append("');");
+                .append("VALUES (").append(dataStream[0].getUnderlying());
 
         String query = sb.toString();
         session.execute(query);
