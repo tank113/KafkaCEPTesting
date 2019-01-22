@@ -127,7 +127,6 @@ public class KafkaEventConsumer {
                                     } catch (IOException e) {
                                         e.printStackTrace();
                                     }
-                                    //System.out.println("sum \t" + newEvents[0].getUnderlying() + "\n");
                                     System.out.println("old sum \t" + oldEvents[0].getUnderlying() + "\n");
 
                                 }
@@ -160,8 +159,6 @@ public class KafkaEventConsumer {
 
                             for (ConsumerRecord<String, JsonNode> record : consumerRecords) {
                                 JsonNode jsonNode = record.value();
-                                //System.out.println(record.key()+  "," + record.value()+ "," + record.partition()+ "," + record.offset());
-                                //eventGenerator(jsonNode);
                                 ObjectMapper mapper = new ObjectMapper();
 
                                 result = mapper.readValue(jsonNode.toString(),
