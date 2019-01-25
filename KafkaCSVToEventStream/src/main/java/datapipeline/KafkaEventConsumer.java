@@ -1,18 +1,15 @@
 package datapipeline;
 
 import com.espertech.esper.client.*;
-import com.espertech.esper.client.annotation.EventRepresentation;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.apache.kafka.clients.consumer.Consumer;
+import dataanalysis.FeatureSelection;
+import dataanalysis.TrendDetection;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.errors.WakeupException;
-import org.json.simple.JSONObject;
-
 import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
@@ -65,24 +62,31 @@ public class KafkaEventConsumer {
             //Start processing messages
             Configuration config = new Configuration();
             EPServiceProvider epService = EPServiceProviderManager.getDefaultProvider(config);
-            //epService.getEPAdministrator().getConfiguration().addEventType("weatherEvent", result);
-            //String[] functionNames = new String[] {FeatureDetectorConstant.FEATUREDETECTED_NAME, FeatureDetectorConstant.FEATUREOUTPUT_NAME};
-            //ConfigurationPlugInSingleRowFunction config = new ConfigurationPlugInSingleRowFunction();
+
+            // Define Single-row function in ESPER
             epService.getEPAdministrator().getConfiguration().addPlugInSingleRowFunction("feature_selection", FeatureSelection.class.getName(), "feature_selection");
             epService.getEPAdministrator().getConfiguration().addPlugInSingleRowFunction("detect_trend", TrendDetection.class.getName(), "detect_trend");
+
+            // Create WeatherEvent using Map properties
             String createEventExp = "@EventRepresentation(map) create schema weatherEvent as (prop1 Map)";
             EPStatement statement1 = epService.getEPAdministrator().createEPL(createEventExp);
             ListenerEvent listener = new ListenerEvent();
             statement1.addListener(listener);
+
+            // Create WeatherTrendEvent using Map properties
             String createEventExpTrends = "@EventRepresentation(map) create schema weatherTrendEvent as (prop1 Map)";
             EPStatement statementTrend = epService.getEPAdministrator().createEPL(createEventExpTrends);
             ListenerEvent listenerForTrend = new ListenerEvent();
             statementTrend.addListener(listenerForTrend);
+
+            // Create Batch context of 1 seconds
             String expression2 ="create context batch10seconds start @now end after 1 sec";
             EPStatement statement2 = epService.getEPAdministrator().createEPL(expression2);
             ListenerEvent listener2 = new ListenerEvent();
             statement2.addListener(listener2);
+
             KafkaEventProducer kProd = new KafkaEventProducer();
+
             try {
                 while (true) {
                     ConsumerRecords<String, JsonNode> consumerRecords = kafkaConsumer.poll(100);
@@ -98,12 +102,7 @@ public class KafkaEventConsumer {
 
                             EPRuntime runtime = epService.getEPRuntime();
 
-                            //EPRuntime runtime1 = epService.getEPRuntime();
-
-
-
-
-
+                            // Esper Query for Feature Selection using single row function which returns the map with features
                             String expression = "select distinct feature_selection(first(e), last(e)) from weatherEvent.win:length(3) as e";
                             EPStatement statement = epService.getEPAdministrator().createEPL(expression);
                             statement.addListener(new UpdateListener() {
@@ -119,7 +118,6 @@ public class KafkaEventConsumer {
                                                 new TypeReference<HashMap<String, Object>>() {
                                                 });
                                         Map.Entry<String,Object> entry = result_output.entrySet().iterator().next();
-                                        //System.out.println("Value" + entry.getValue());
                                         kProd.initKafkaConfig();
                                         kProd.sendOutputToKafka(entry.getValue(), "output");
                                         runtime.sendEvent(result_output, "weatherTrendEvent");
@@ -135,26 +133,18 @@ public class KafkaEventConsumer {
 
                             });
 
-                            /*String insertIntoTrend = "insert into weatherTrendEvent select distinct feature_selection(first(e), last(e)) from weatherEvent.win:length(3) as e";
-                            EPStatement statementForInsert = epService.getEPAdministrator().createEPL(insertIntoTrend);
-                            ListenerEvent listenerTrend = new ListenerEvent();
-                            statementForInsert.addListener(listenerTrend);*/
-
+                            // Esper Query for Trends detection using single row function which returns the nested map with increasing, decreasing and Turn trends features.
                             String expressionTrend = "select detect_trend(trendEvent, prev(trendEvent), first(trendEvent)) from weatherTrendEvent.win:length(3) as trendEvent";
                             EPStatement statementForTrend = epService.getEPAdministrator().createEPL(expressionTrend);
                             statementForTrend.addListener (new UpdateListener() {
                                 @Override
                                 public void update(EventBean[] newEvents, EventBean[] oldEvents) {
                                     System.out.println("event \t" + newEvents[0].getUnderlying() + "\n");
-                                    //System.out.println("event \t" + newEvents[1].getUnderlying() + "\n");
                                     System.out.println("old event \t" + oldEvents[0].getUnderlying() + "\n");
 
                             }
 
-
-
                         });
-
 
 
                             for (ConsumerRecord<String, JsonNode> record : consumerRecords) {
@@ -170,10 +160,6 @@ public class KafkaEventConsumer {
                             }
 
 
-
-
-
-
                             kafkaConsumer.commitAsync();
 
                     }
@@ -184,10 +170,7 @@ public class KafkaEventConsumer {
                 System.out.println("Exception caught " + ex.getMessage());
             } catch (IOException e) {
                 e.printStackTrace();
-            } /*finally {
-                kafkaConsumer.close();
-                System.out.println("After closing KafkaConsumer");
-            }*/
+            }
         }
 
 

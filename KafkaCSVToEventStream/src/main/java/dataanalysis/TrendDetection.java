@@ -1,4 +1,4 @@
-package datapipeline;
+package dataanalysis;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -14,24 +14,14 @@ public class TrendDetection {
 
 
         Map<String, Object> resultInc = new HashMap<String, Object>();
-
         Map<String, Object> resultDec = new HashMap<String, Object>();
-
         Map<String, Object> resultTurn = new HashMap<String, Object>();
-
         Map<String, Object> trend = new HashMap<String, Object>();
 
-
+        // Convert Object to Map
         Map first = objectToMap(firstEvent);
         Map second = objectToMap(prevEvent);
         Map third = objectToMap(lastEvent);
-
-
-        System.out.println("New" + first);
-
-        System.out.println("Middle" + second);
-
-        System.out.println("last" + third);
 
 
         for (Object k : first.keySet()){

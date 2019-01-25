@@ -25,8 +25,6 @@ public class Main {
             consumer.createConsumer();
             System.out.println("Consumer 1 created");
 
-            //consumerTrend.createTrendConsumer();
-            //System.out.println("Consumer 2 created");
         }catch(Exception e){
             e.printStackTrace();
         }
